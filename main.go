@@ -11,10 +11,15 @@ import (
 )
 
 const (
-	DELAY_REFRESH_SCREEN = time.Duration(300 * time.Millisecond)
-	SCORE_LIMIT          = 50
-	STEP_LIMIT           = 5
-	QUANTITY_HORSES      = 7
+	DELAY_HORSE_STEP     = time.Duration(300 * time.Millisecond)
+	DELAY_REFRESH_SCREEN = time.Duration(100 * time.Millisecond)
+	HORSE_LABEL          = "H"
+	HORSE_MAX_SPEED      = 5
+	HORSE_MIN_SPEED      = 1
+	HORSES_QUANTITY      = 10
+	HORSES_MAX_QUANTITY  = 99
+	SCORE_TARGET         = 75
+	TIMEOUT_GAME         = time.Duration(10 * time.Second)
 )
 
 type Horse struct {
@@ -24,54 +29,84 @@ type Horse struct {
 
 var horses = []*Horse{}
 
+func (h *Horse) Winner() string {
+	return fmt.Sprintf("The horse winner is: %s - Score %d", h.Label, h.Score)
+}
+
 func main() {
-	load_horses()
 	run()
 }
 
-func load_horses() {
-	qtd_horses := 2
-	if QUANTITY_HORSES > 1 || QUANTITY_HORSES < 11 {
-		qtd_horses = QUANTITY_HORSES
-	}
-
-	for i := range qtd_horses {
-		horses = append(horses, &Horse{Label: "H" + strconv.Itoa(i+1), Score: 0})
-	}
-}
-
 func run() {
+	load_horses()
 	end_race := make(chan bool)
-
 	for _, horse := range horses {
-		go func(target *Horse) {
-			r := rand.New(rand.NewSource(time.Now().UnixNano()))
-			for {
-				target.Score += r.Intn(STEP_LIMIT) + 1
-				if target.Score >= SCORE_LIMIT {
-					end_race <- true
-					break
-				}
-				time.Sleep(DELAY_REFRESH_SCREEN)
-			}
-		}(horse)
+		go goHorse(horse, end_race)
 	}
 
-	go func() {
-		for {
-			clear_terminal()
-			print_race()
-			time.Sleep(time.Duration(100 * time.Millisecond))
-		}
-	}()
+	go display()
 
 	select {
 	case <-end_race:
 		clear_terminal()
 		print_race()
-	case <-time.After(10 * time.Second):
+	case <-time.After(TIMEOUT_GAME):
 		fmt.Println("The Horses Are Tired!")
 	}
+
+	println(getHorseWinner().Winner())
+}
+
+func load_horses() {
+	qtd_horses := 2
+	if HORSES_QUANTITY > 1 || HORSES_QUANTITY <= HORSES_MAX_QUANTITY {
+		qtd_horses = HORSES_QUANTITY
+	}
+
+	for i := range qtd_horses {
+		index := i + 1
+		prefix := ""
+		if index < 10 {
+			prefix = "0"
+		}
+
+		horses = append(horses, &Horse{Label: HORSE_LABEL + prefix + strconv.Itoa(index), Score: 0})
+	}
+}
+
+func goHorse(target *Horse, end_race chan (bool)) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for {
+		target.Score += r.Intn(HORSE_MAX_SPEED) + HORSE_MIN_SPEED
+		if target.Score >= SCORE_TARGET {
+			end_race <- true
+			break
+		}
+		time.Sleep(DELAY_HORSE_STEP)
+	}
+}
+
+func display() {
+	for {
+		clear_terminal()
+		print_race()
+		time.Sleep(DELAY_REFRESH_SCREEN)
+	}
+}
+
+func getHorseWinner() *Horse {
+	horse_winner := &Horse{Label: "", Score: 0}
+	for _, horse := range horses {
+		if horse_winner.Label == "" {
+			horse_winner = horse
+			continue
+		}
+
+		if horse.Score > horse_winner.Score {
+			horse_winner = horse
+		}
+	}
+	return horse_winner
 }
 
 func clear_terminal() {
@@ -83,24 +118,21 @@ func clear_terminal() {
 func print_race() {
 	println(generateTrackLimit())
 	for _, horse := range horses {
-		println(generateHorseTrack(horse.Label, horse.Score))
+		println(generateHorseTrack(horse, horse.Score))
 	}
 	println(generateTrackLimit())
 }
 
-func generateHorseTrack(horse string, score int) string {
+func generateHorseTrack(horse *Horse, score int) string {
 	more := ""
-	if SCORE_LIMIT-score > 0 {
-		more = strings.Repeat(" ", SCORE_LIMIT-score)
+	if SCORE_TARGET-score > 0 {
+		more = strings.Repeat(" ", SCORE_TARGET-score-1)
 	}
 
 	less := strings.Repeat(".", score)
-	return fmt.Sprintf("|%v%v%v|", less, horse, more)
+	return fmt.Sprintf("%s|%v%v%v|", horse.Label, less, horse.Label, more)
 }
 
 func generateTrackLimit() string {
-	limit := "+"
-	limit += strings.Repeat("-", SCORE_LIMIT+2)
-	limit += "+"
-	return limit
+	return "   +" + strings.Repeat("-", SCORE_TARGET+2) + "+"
 }
