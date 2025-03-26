@@ -1,3 +1,5 @@
+![Codecov](https://img.shields.io/codecov/c/github/psaraiva/lab-go-horse-racing)
+
 # Lab: Go Corrida de cavalos
 
 ## Objetivo
