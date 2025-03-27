@@ -31,10 +31,10 @@ func TestLoadConfigWithInvalidValures(t *testing.T) {
 
 	intEnv()
 
-	assert.Equal(t, HORSE_LABEL_DEFAULT, horseLabel)
-	assert.Equal(t, HORSE_QUANTITY_DEFAULT, horseQuantity)
-	assert.Equal(t, SCORE_TARGET_DEFAULT, scoreTarget)
-	assert.Equal(t, GAME_TIMEOUT_DEFAULT, gameTimeout)
+	assert.Equal(t, HorseLabelDefault, horseLabel)
+	assert.Equal(t, HorseQuantityDefault, horseQuantity)
+	assert.Equal(t, ScoreTargetDefault, scoreTarget)
+	assert.Equal(t, GameTimeoutDefault, gameTimeout)
 	assert.Equal(t, 10*time.Second, gameTimeoutDuration)
 }
 
@@ -113,7 +113,7 @@ func TestGetRaceStr(t *testing.T) {
 	horses[0].Score = 5
 	horses[1].Score = 7
 
-	scoreTarget = SCORE_TARGET_DEFAULT
+	scoreTarget = ScoreTargetDefault
 	expected := "   +-----------------------------------------------------------------------------+\n"
 	expected += "H01|.....H01                                                                     |\n"
 	expected += "H02|.......H02                                                                   |\n"

@@ -3,7 +3,7 @@
 ## Objetivo
 Essa laboratório tem como objetivo demostrar o uso de Goroutines de um jeito simples, prático e divertido.
 
-## Proposta
+## Como isso funciona?
 Cada cavalo na corrida usa uma Goroutine, incrementando o valor de "pontos" a cada turno (sleep). A atualização das posições de cada cavalo é gerado por uma Goroutine. Por fim tem um SELECT aguarda uma das Goroutine sinalizar que chegou na pontuação alvo por meio de um canal, então o jogo acaba.
 
 ## Parâmetros de jogo

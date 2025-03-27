@@ -14,29 +14,43 @@ import (
 )
 
 const (
-	DELAY_HORSE_STEP           = time.Duration(300 * time.Millisecond)
-	DELAY_REFRESH_SCREEN       = time.Duration(100 * time.Millisecond)
-	HORSE_LABEL_DEFAULT        = "H"
-	HORSE_MAX_SPEED            = 5
-	HORSE_MIN_SPEED            = 1
-	HORSE_QUANTITY_DEFAULT     = 2
-	HORSE_QUANTITY_MAX         = 99
-	HORSE_QUANTITY_MIN         = 2
-	SCORE_TARGET_DEFAULT       = 75
-	SCORE_TARGET_MIN           = 15
-	SCORE_TARGET_MAX           = 100
-	GAME_TIMEOUT_DEFAULT       = "10s"
-	GAME_TIMEOUT_REGEX_PATTERN = `^\d{1,2}s$`
+	// DelayHorseStep is the time that the horse will wait to move
+	DelayHorseStep time.Duration = time.Duration(300 * time.Millisecond)
+	// DelayRefreshScreen is the time that the screen will wait to refresh
+	DelayRefreshScreen time.Duration = time.Duration(100 * time.Millisecond)
+	// HorseLabelDefault is the default label for the horse
+	HorseLabelDefault string = "H"
+	// HorseMaxSpeed is the maximum speed that the horse can reach
+	HorseMaxSpeed int = 5
+	// HorseMinSpeed is the minimum speed that the horse can reach
+	HorseMinSpeed int = 1
+	// HorseQuantityDefault is the default quantity of horses
+	HorseQuantityDefault int = 2
+	// HorseQuantityMax is the maximum quantity of horses
+	HorseQuantityMax int = 99
+	// HorseQuantityMin is the minimum quantity of horses
+	HorseQuantityMin int = 2
+	// ScoreTargetDefault is the default score target
+	ScoreTargetDefault int = 75
+	// ScoreTargetMin is the minimum score target
+	ScoreTargetMin int = 15
+	// ScoreTargetMax is the maximum score target
+	ScoreTargetMax int = 100
+	// GameTimeoutDefault is the default game timeout
+	GameTimeoutDefault string = "10s"
+	// GameTimeoutRegexPattern is the regex pattern for the game timeout
+	GameTimeoutRegexPattern string = `^\d{1,2}s$`
 )
 
 var (
-	horseLabel          = HORSE_LABEL_DEFAULT
-	horseQuantity       = HORSE_QUANTITY_DEFAULT
-	scoreTarget         = SCORE_TARGET_DEFAULT
-	gameTimeout         = GAME_TIMEOUT_DEFAULT
+	horseLabel          = HorseLabelDefault
+	horseQuantity       = HorseQuantityDefault
+	scoreTarget         = ScoreTargetDefault
+	gameTimeout         = GameTimeoutDefault
 	gameTimeoutDuration = 10 * time.Second
 )
 
+// Horse struct
 type Horse struct {
 	Label string
 	Score int
@@ -44,6 +58,7 @@ type Horse struct {
 
 var horses = []*Horse{}
 
+// Winner returns the winner phrase
 func (h *Horse) Winner() string {
 	return fmt.Sprintf("The horse winner is: %s - Score %d", h.Label, h.Score)
 }
@@ -64,7 +79,7 @@ func intEnv() {
 }
 
 func setHorseLabel() {
-	horseLabel = HORSE_LABEL_DEFAULT
+	horseLabel = HorseLabelDefault
 	temp := os.Getenv("HORSE_LABEL")
 	if len(temp) == 1 {
 		horseLabel = temp
@@ -72,7 +87,7 @@ func setHorseLabel() {
 }
 
 func setScoreTarget() {
-	scoreTarget = SCORE_TARGET_DEFAULT
+	scoreTarget = ScoreTargetDefault
 	tmp, err := strconv.Atoi(os.Getenv("SCORE_TARGET"))
 	if err == nil && isValidScoreTarget(tmp) {
 		scoreTarget = tmp
@@ -80,17 +95,17 @@ func setScoreTarget() {
 }
 
 func setHorseQuantity() {
-	horseQuantity = HORSE_QUANTITY_DEFAULT
+	horseQuantity = HorseQuantityDefault
 	tmp, err := strconv.Atoi(os.Getenv("HORSE_QUANTITY"))
-	if err == nil && tmp >= HORSE_QUANTITY_MIN && tmp <= HORSE_QUANTITY_MAX {
+	if err == nil && tmp >= HorseQuantityMin && tmp <= HorseQuantityMax {
 		horseQuantity = tmp
 	}
 }
 
 func setGameTimeout() {
-	gameTimeout = GAME_TIMEOUT_DEFAULT
+	gameTimeout = GameTimeoutDefault
 	tmp := os.Getenv("GAME_TIMEOUT")
-	r, err := regexp.Compile(GAME_TIMEOUT_REGEX_PATTERN)
+	r, err := regexp.Compile(GameTimeoutRegexPattern)
 	if err == nil && r.MatchString(tmp) {
 		gameTimeout = tmp
 	}
@@ -111,16 +126,16 @@ func main() {
 func run() {
 	loadConfig(".env")
 	loadHorses(horseQuantity)
-	end_race := make(chan bool)
+	endRace := make(chan bool)
 	for _, horse := range horses {
-		go goHorse(horse, end_race)
+		go goHorse(horse, endRace)
 	}
 
 	go display()
 
 	select {
-	case <-end_race:
-		clear_terminal()
+	case <-endRace:
+		clearTerminal()
 		println(getRaceStr())
 	case <-time.After(gameTimeoutDuration):
 		fmt.Println("The Horses Are Tired!")
@@ -142,42 +157,42 @@ func loadHorses(horsesQuantity int) {
 	}
 }
 
-func goHorse(target *Horse, end_race chan<- (bool)) {
+func goHorse(target *Horse, endRace chan<- (bool)) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for {
-		target.Score += r.Intn(HORSE_MAX_SPEED) + HORSE_MIN_SPEED
+		target.Score += r.Intn(HorseMaxSpeed) + HorseMinSpeed
 		if target.Score >= scoreTarget {
-			end_race <- true
+			endRace <- true
 			break
 		}
-		time.Sleep(DELAY_HORSE_STEP)
+		time.Sleep(DelayHorseStep)
 	}
 }
 
 func display() {
 	for {
-		clear_terminal()
+		clearTerminal()
 		println(getRaceStr())
-		time.Sleep(DELAY_REFRESH_SCREEN)
+		time.Sleep(DelayRefreshScreen)
 	}
 }
 
 func getHorseWinner() *Horse {
-	horse_winner := &Horse{}
+	horseWinner := &Horse{}
 	for _, horse := range horses {
-		if horse_winner.Label == "" {
-			horse_winner = horse
+		if horseWinner.Label == "" {
+			horseWinner = horse
 			continue
 		}
 
-		if horse.Score > horse_winner.Score {
-			horse_winner = horse
+		if horse.Score > horseWinner.Score {
+			horseWinner = horse
 		}
 	}
-	return horse_winner
+	return horseWinner
 }
 
-func clear_terminal() {
+func clearTerminal() {
 	cmd := exec.Command("clear")
 	cmd.Stdout = os.Stdout
 	cmd.Run()
@@ -196,7 +211,7 @@ func getRaceStr() string {
 func generateHorseTrack(horse *Horse, scoreTarget int) string {
 	more := ""
 	if !isValidScoreTarget(scoreTarget) {
-		scoreTarget = SCORE_TARGET_DEFAULT
+		scoreTarget = ScoreTargetDefault
 	}
 
 	if scoreTarget-horse.Score > 0 {
@@ -209,7 +224,7 @@ func generateHorseTrack(horse *Horse, scoreTarget int) string {
 
 func generateTrackLimit(scoreTarget int) string {
 	if !isValidScoreTarget(scoreTarget) {
-		scoreTarget = SCORE_TARGET_DEFAULT
+		scoreTarget = ScoreTargetDefault
 	}
 
 	return "   +" + strings.Repeat("-", scoreTarget+2) + "+"
@@ -220,5 +235,5 @@ func clearHorses() {
 }
 
 func isValidScoreTarget(scoreTarget int) bool {
-	return scoreTarget >= SCORE_TARGET_MIN && scoreTarget <= SCORE_TARGET_MAX
+	return scoreTarget >= ScoreTargetMin && scoreTarget <= ScoreTargetMax
 }
