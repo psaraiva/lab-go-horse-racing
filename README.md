@@ -1,3 +1,4 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/psaraiva/lab-go-horse-racing)](https://goreportcard.com/report/github.com/psaraiva/lab-go-horse-racing)
 ![Codecov](https://img.shields.io/codecov/c/github/psaraiva/lab-go-horse-racing)
 
 # Lab: Go Corrida de cavalos
